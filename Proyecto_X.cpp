@@ -1134,10 +1134,7 @@ void menuuser(string nombre1,string correo){
         }
     }while (opcion4 != 0);
 }
-void imprimirMultilista(user *&users) {
-    user* tempUser = users;
-    while (tempUser != nullptr) {
-        cout << "--------------------------------------\n";
+ "--------------------------------------\n";
         cout << "Usuario: " << tempUser->nombre1 << " (" << tempUser->id1 << ")" << endl;
         cout << "  Edad: " << tempUser->edad1 << endl;
         cout << "  Correo: " << tempUser->correo1 << endl;
@@ -1180,7 +1177,6 @@ int main(){
         cout<< "2. Crear una cuenta \n";
         cout<< "3. eliminar una cuenta\n";
         cout<< "4. acceder como administrador\n";
-        cout<< "5. multi\n";
         cout<<"--------------------------------------\n";
         cout<< "0. Salir de la aplicacion\n";
         cout<< "Indique su opcion->";
@@ -1278,13 +1274,7 @@ int main(){
                 cout<<"la contrase indicada no es correcta!porfavor intente nuevamente";
                 system("pause");
             break;
-            case 5:
-                system("cls");
-                imprimirMultilista(users);
-                system("pause");
-            break;      
-        }
-        }
+
     }while (opcion!= 0);
     delete users; 
     return 0;
