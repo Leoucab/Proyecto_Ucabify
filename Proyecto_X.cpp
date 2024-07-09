@@ -477,11 +477,16 @@ void verHistorial(string correo) {
     if (archivo.is_open()) {
         string linea;
         while (getline(archivo, linea)) {
-            cout << linea << endl;
+            size_t lastDash = linea.find_last_of('-');
+            if (lastDash != string::npos) {
+                cout << linea.substr(0, lastDash) << endl;
+            } else {
+                cout << linea << endl;
+            }
         }
         archivo.close();
     } else {
-        cout << "no ha escuchado ninguna cancion!"<< endl;
+        cout << "no ha escuchado ninguna cancion!" << endl;
     }
 }
 void reproducir(user *&users, string correo,int id1) {
@@ -495,7 +500,7 @@ void reproducir(user *&users, string correo,int id1) {
                     string songName = cancion->nombre;
                     string artistName = cancion->artista;
                     cout << "(" << songName <<"-"<< artistName <<")"<< endl;
-                    cout << "   |-------------|" << endl;
+                    cout << "     |-------------|" << endl;
                     cout << "       <-- II -->" << "\n";
                     cout<<"si desea terminar de escuchar esta cancion presione cualquier tecla!";
                     system("pause");
@@ -622,7 +627,7 @@ void insertinuser(user *&users, int fecha, int id, string nombre, string artista
         inicio = inicio->prx1;
     }
 }
-void cargararchivocancionesuni(string nombreArchivo2, user *&users, cancionduplic *&cancionesduplic) {
+void cargararchivocancionesuni(string nombreArchivo2, user *&users, cancionduplic *&cancionesduplic,string correo) {
     ifstream archivo(nombreArchivo2);
     string linea;
     char chrnombre[50], chrartista[50], chrgenero[50], chrmg[50];
@@ -665,7 +670,7 @@ void insertaruser(user *&users, cancionduplic *&cancionesduplic, string nombrear
         actual->prx1 = nuevo;
     }
     cancionduplic *temp = nullptr;
-    cargararchivocancionesuni(nombrearchivo2, users, cancionesduplic);
+    cargararchivocancionesuni(nombrearchivo2, users,cancionesduplic,correo1);
 }
 void cargararchivouser(string nombreArchivo, string nombrearchivo2, user *&users, usuario *&usuarios, cancionduplic *&cancionesduplic) {
     ifstream archivo(nombreArchivo);
@@ -781,7 +786,31 @@ void historialmg(string correo, int id1) {
   remove((nombrearch).c_str());
   rename("temp.txt", (nombrearch).c_str());
 
-  cout << "Canciones marcadas como me gusta con exito." << endl;
+  cout << "Cancion agregada a tus me gusta con exito" << endl;
+}
+void historialnomg(string correo, int id1) {
+  string nombrearch = "historial de-" + correo + ".txt";
+  ifstream archivo(nombrearch);
+  string linea;
+  ofstream archivoNuevo("temp.txt");
+  while (getline(archivo, linea)) {
+    int id;
+    char idStr[10];
+    sscanf(linea.c_str(), "%*[^-]-%*[^-]-%*[^-]-%*[^-]-%d-%*[^-]-%*[^-]",&id);
+    if (id == id1) {
+      size_t pos = linea.find("si");
+      if (pos!= -1) {
+        linea.replace(pos, 3, "no-");
+      }
+    }
+    archivoNuevo << linea << "\n";
+  }
+  archivo.close();
+  archivoNuevo.close();
+  remove((nombrearch).c_str());
+  rename("temp.txt", (nombrearch).c_str());
+
+  cout << "Cancion elimindada tus me gusta con exito." << endl;
 }
 void megusta(user *&users, string correo,int id1){
     user *actual = users;
@@ -790,6 +819,10 @@ void megusta(user *&users, string correo,int id1){
             cancionduplic *cancion = actual->temp;
             while (cancion) {
                 if (id1 == cancion->id) {
+                    if(cancion->mg == "si"){
+                    cout<<"esta cancion ya se encuentra en tus me gusta\n";
+                    return;
+                    }
                     cancion->mg="si";
                     historialmg(correo,id1);                
                     }
@@ -800,6 +833,78 @@ void megusta(user *&users, string correo,int id1){
     }
     
     return; 
+}
+void nomegusta(user *&users, string correo, int id1) {
+    user *actual = users;
+    while (actual) {
+        if (correo == actual->correo1) {
+            cancionduplic *cancion = actual->temp;
+            while (cancion) {
+                if (id1 == cancion->id) {
+                    if (cancion->mg == "no") {
+                        cout << "esta cancion no se encuentra en tus me gusta porfavor seleccione de la lista \n";
+                        return;
+                    }
+                    cancion->mg = "no";
+                    historialnomg(correo, id1);
+                    break;
+                }
+                cancion = cancion->prx1;
+            }
+        }
+        actual = actual->prx1;
+    }
+    return;
+}
+void vermegusta(string correo) {
+    string nombrearch = "historial de-" + correo + ".txt";
+    ifstream archivo(nombrearch);
+    string idMostrados; 
+
+    if (archivo.is_open()) {
+        string linea;
+        while (getline(archivo, linea)) {
+            size_t found = linea.find("-");
+            if (found!= string::npos) {
+                string id = linea.substr(found + 1, 6); 
+                if (linea.find("si")!= string::npos && idMostrados.find(id) == string::npos) {
+                    cout << linea << endl;
+                    idMostrados += id + ","; 
+                }
+            }
+        }
+        archivo.close();
+    } else {
+        cout << "no ha agregado ninguna cancion a tus me gusta!" << endl;
+    }
+}
+void verusersong(user *&users, string correo) {
+    user* tempUser = users;
+    while (tempUser != nullptr) {
+        if (tempUser->correo1 == correo) {
+            cout << "Canciones de " << tempUser->nombre1 << " (" << tempUser->id1 << ")" << endl;
+            cout << "--------------------------------------\n";
+            cancionduplic* tempCancion = tempUser->temp; 
+            while (tempCancion != nullptr) {
+                if (tempCancion->mg == "no") {
+                    if (tempCancion->nombre.empty() || tempCancion->artista.empty() || tempCancion->genero.empty()) {
+                        cout << "Error: Cancion data is incomplete." << endl;
+                        continue;
+                    }
+                    cout << "  Cancion: " << tempCancion->nombre << " (" << tempCancion->id << ")" << endl;
+                    cout << "    Artista: " << tempCancion->artista << endl;
+                    cout << "    Genero: " << tempCancion->genero << endl;
+                    cout << "    MG: " << tempCancion->mg << endl;
+                    cout << "    RP: " << tempCancion->rp << endl;
+                }
+                tempCancion = tempCancion->prx1;
+            }
+            cout << "--------------------------------------\n";
+            return; 
+        }
+        tempUser = tempUser->prx1;
+    }
+    cout << "Error: User not found." << endl;
 }
 //menu cancionadmin
 void menucancionadmin(){
@@ -812,7 +917,7 @@ void menucancionadmin(){
         system("cls");
         cout<<"Ucabify\n";
         cout<<"--------------------------------------\n";
-        cout<< "\tMenu de canciones\n";
+        cout<<       "\tMenu de canciones\n";
         cout<<"--------------------------------------\n";
         cout<< "1. mostrar canciones agregadas\n";
         cout<< "2. insertar una nueva cancion \n";
@@ -880,7 +985,7 @@ void menuusuarioadmin(){
         system("cls");
         cout<<"Ucabify\n";
         cout<<"--------------------------------------\n";
-        cout<< "\tMenu de usuarios\n";
+        cout<<       "\tMenu de usuarios\n";
         cout<<"--------------------------------------\n";
         cout<< "1. mostrar usuarios en el sistema\n";
         cout<< "2. eliminar un usuario \n";
@@ -926,7 +1031,7 @@ void menuadmin(){
         system("cls");
         cout<<"Ucabify\n";
         cout<<"--------------------------------------\n";
-        cout<< "\tbienvenido administrador\n";
+        cout<<     "\tbienvenido administrador\n";
         cout<<"--------------------------------------\n";
         cout<< "\taccede a la base de datos de:\n";
         cout<<"--------------------------------------\n";
@@ -960,7 +1065,8 @@ void menuuser(string nombre1,string correo){
         cout<<"--------------------------------------\n";
         cout<< "1. reproducir una cancion\n";
         cout<< "2. ver el historial de canciones reproducidas\n";
-        cout<< "3. agregar canciones a tus me gusta\n";
+        cout<< "3. agregar canciones a tus megusta\n";
+        cout<< "4. sacar canciones de tus me gusta\n";
         cout<< "4. top 5 canciones mas reproducidas\n";
         cout<< "5. top 3 artistas mas escuchados\n";
         cout<< "6. encuentra tu alma gemela musical\n";
@@ -977,31 +1083,54 @@ void menuuser(string nombre1,string correo){
                 system("cls");
                 reproducir(users,correo,id3);
                 system("pause");
-                break;
+            break;
+
             case 2:
                 system("cls");
                 verHistorial(correo);
                 system("pause");
-                break;
+            break;
+
             case 3:
                 system("cls");
-                cout<<"indique el id de la cancion que deseas agregar a tus me gusta: ";
-                cin>>id3;
-                megusta(users,correo,id3);
+                verusersong(users,correo);
+                cout<<"desea agregar alguna de estas canciones a tus megusta? y/n: ";
+                cin>>rspu;
+                if(rspu=="y" || rspu=="Y"){
+                    cout<<"indique el id de la cancion que desea agregar a tus me gusta: ";
+                    cin>>id3;
+                    megusta(users,correo,id3);
+                }
                 system("pause");
-                break;
+            break;
+
             case 4:
                 system("cls");
+                vermegusta(correo);
+                cout<<"desea sacar alguna de estas canciones de tus me gusta? y/n: ";
+                cin>>rspu;
+                if(rspu=="y" || rspu=="Y"){
+                    cout<<"indique el id de la cancion que desea sacar de tus me gusta: ";
+                    cin>>id3;
+                    nomegusta(users,correo,id3);
+                }
                 system("pause");
-                break;
+            break;
+
             case 5:
                 system("cls");
                 system("pause");
-                break;
+            break;
+
             case 6:
                 system("cls");
                 system("pause");
-                break;
+            break;
+
+            case 7:
+                system("cls");
+                system("pause");
+            break;
         }
     }while (opcion4 != 0);
 }
