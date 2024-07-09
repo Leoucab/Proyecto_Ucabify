@@ -1033,7 +1033,7 @@ void menuadmin(){
         cout<<"--------------------------------------\n";
         cout<<     "\tbienvenido administrador\n";
         cout<<"--------------------------------------\n";
-        cout<< "\taccede a la base de datos de:\n";
+        cout<<   "\taccede a la base de datos de:\n";
         cout<<"--------------------------------------\n";
         cout<< "1. canciones\n";
         cout<< "2. usuarios\n";
